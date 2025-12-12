@@ -1,152 +1,336 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Malla Interactiva</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Malla Interactiva – Silvana</title>
+
 <style>
-  body {
-    font-family: Arial, sans-serif;
-    background: #f7f7ff;
-    padding: 20px;
+  :root{
+    --bg:#fbfbff;
+    --card:#fcfcff;            /* very pale white */
+    --pastel-blue:#eaf9ff;     /* pastel sky blue */
+    --pastel-lilac:#f6edff;    /* pastel lilac */
+    --done:#dfffe6;            /* pastel green for completed */
+    --accent:#6b5bd6;
+    --muted:#9aa0a6;
+    --shadow: 0 6px 18px rgba(15,20,40,0.06);
   }
-  h1 { text-align: center; color: #333; }
 
-  .grid {
-    display: grid;
+  /* Reset + layout */
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    background: linear-gradient(180deg, var(--bg), #f3f7ff 120%);
+    color:#223;
+    padding:28px;
+  }
+  header{ max-width:1200px; margin:0 auto 18px; display:flex; align-items:center; justify-content:space-between; gap:16px; }
+  h1{ font-size:20px; margin:0; color:#223; letter-spacing:-0.2px; }
+  .sub{ color:var(--muted); font-size:13px }
+
+  /* Grid: 4 columns, responsive */
+  .board{
+    max-width:1200px;
+    margin: 18px auto 0;
+    display:grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 20px;
+    gap:18px;
+  }
+  @media (max-width:980px){
+    .board{ grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width:560px){
+    .board{ grid-template-columns: 1fr; }
   }
 
-  .semester {
-    background: #fcfcff;
-    padding: 15px;
-    border-radius: 12px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  .semester{
+    background:var(--card);
+    border-radius:12px;
+    padding:14px;
+    box-shadow:var(--shadow);
+    border:1px solid rgba(20,20,40,0.03);
+    min-height:160px;
+  }
+  .semester h2{
+    margin:0 0 10px 0;
+    font-size:15px;
+    color:#2b2b3d;
+    text-align:center;
+    padding-bottom:8px;
+    border-bottom:1px dashed rgba(100,110,140,0.06);
   }
 
-  .semester h2 {
-    text-align: center;
-    margin-bottom: 10px;
-    color: #444;
+  .course{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    padding:10px 12px;
+    border-radius:10px;
+    margin-bottom:10px;
+    cursor:pointer;
+    transition:transform .12s ease, box-shadow .12s ease;
+    box-shadow: 0 1px 0 rgba(15,20,40,0.02);
+    user-select:none;
   }
 
-  .course {
-    background: #dff4ff;
-    padding: 10px;
-    border-radius: 10px;
-    margin-bottom: 10px;
-    cursor: pointer;
-    transition: 0.2s;
+  .course:hover{ transform:translateY(-4px); box-shadow: 0 8px 20px rgba(15,20,40,0.06); }
+
+  .course .left{ display:flex; gap:10px; align-items:center; min-width:0; }
+  .code{
+    font-weight:600; font-size:12px;
+    color: #344;
+    min-width:78px;
+    padding:6px 8px;
+    border-radius:8px;
+    background:rgba(255,255,255,0.6);
+    text-align:center;
+  }
+  .title{ font-size:14px; color:#122; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:170px; }
+
+  /* states */
+  .available{ background: var(--pastel-blue); border:1px solid rgba(110,150,200,0.12); color:#123; }
+  .locked{ background: var(--pastel-lilac); color: #8b7aa8; opacity:0.95; cursor:not-allowed; filter:grayscale(0.02); }
+  .done{ background: var(--done); color:#1b4b2a; text-decoration:line-through; opacity:0.95; border:1px solid rgba(40,160,90,0.06); }
+
+  /* checkbox */
+  .chk{ width:18px; height:18px; border-radius:5px; border:1px solid rgba(0,0,0,0.12); display:inline-grid; place-items:center; background:rgba(255,255,255,0.9); }
+  .chk input{ width:100%; height:100%; margin:0; cursor:pointer; }
+
+  /* credits bar */
+  .credits{
+    max-width:1200px; margin:14px auto 0; display:flex; gap:12px; align-items:center; justify-content:center; flex-wrap:wrap;
+  }
+  .credits .box{
+    background:var(--card); padding:10px 14px; border-radius:10px; box-shadow:var(--shadow); border:1px solid rgba(0,0,0,0.03);
+  }
+  .progress{
+    width:320px; height:12px; background:linear-gradient(90deg,#eef7ff,#f6f6ff); border-radius:8px; overflow:hidden; border:1px solid rgba(0,0,0,0.03);
+  }
+  .progress > .bar{
+    height:100%; width:0%; background:linear-gradient(90deg,#b6e6ff,#dfffe6); border-radius:8px; transition:width .4s ease;
   }
 
-  .course.completed {
-    background: #b8ffc0;
-    text-decoration: line-through;
-    color: #3a6b3c;
-  }
-
-  .course.locked {
-    background: #f3e8ff;
-    color: #888;
-    cursor: not-allowed;
-  }
+  footer{ max-width:1200px; margin:26px auto 0; text-align:center; color:var(--muted); font-size:13px; }
+  small.note{ color:var(--muted); display:block; text-align:center; margin-top:8px; }
 </style>
 </head>
 <body>
-<h1>Malla Interactiva – Administración de Empresas</h1>
 
-<div class="grid" id="grid"></div>
+<header>
+  <div>
+    <h1>Malla Interactiva – Administración de Empresas</h1>
+    <div class="sub">Haz clic en una materia para marcarla como aprobada. Las materias bloqueadas no se pueden marcar.</div>
+  </div>
+
+  <div style="text-align:right">
+    <div class="sub">Usuario: <strong>Silvana</strong></div>
+    <div style="height:6px"></div>
+  </div>
+</header>
+
+<!-- credits / progress -->
+<div class="credits" id="creditsArea" aria-hidden="false">
+  <div class="box">
+    <div style="font-weight:600; font-size:13px">Créditos aprobados</div>
+    <div style="display:flex; gap:10px; align-items:center; margin-top:6px">
+      <div class="progress" aria-hidden="true"><div class="bar" id="progressBar"></div></div>
+      <div id="creditText" style="min-width:78px; font-weight:600; color:#234;">0 / 44</div>
+    </div>
+    <small class="note">La Práctica Técnica se desbloquea al alcanzar 44 créditos.</small>
+  </div>
+</div>
+
+<!-- board -->
+<div class="board" id="board" role="list"></div>
+
+<footer>
+  <small>Los cambios se guardan en tu navegador. Para compartir la malla, usa el enlace de GitHub Pages.</small>
+</footer>
 
 <script>
-// --- Datos de la malla ---
-const semesters = [
-  {
-    name: "Semestre 1",
-    courses: [
-      { code: "13038C", name: "Contexto Empresarial", req: [] },
-      { code: "23037C", name: "Contabilidad General", req: [] },
-      { code: "43001C", name: "Matemática Fundamental", req: [] },
-      { code: "173028C", name: "Fundamentos de Mercadeo", req: [] },
-      { code: "103009C", name: "Cátedra Pensar", req: [] },
-      { code: "13002C", name: "Documentación y Manejo de Información", req: [] }
-    ]
-  },
-  {
-    name: "Semestre 2",
-    courses: [
-      { code: "13003C", name: "Operación de Compensaciones y Salarios", req: [] },
-      { code: "13039C", name: "Organización, Cultura y Cambio", req: ["13038C"] },
-      { code: "23025C", name: "Costos", req: [] },
-      { code: "33016C", name: "Aspectos Legales de la Organización", req: [] },
-      { code: "43002C", name: "Cálculo Diferencial", req: ["43001C"] },
-      { code: "173015C", name: "Técnicas de Ventas y Servicios", req: [] }
-    ]
-  },
-  {
-    name: "Semestre 3",
-    courses: [
-      { code: "33017C", name: "Aspectos Legales Laborales", req: [] },
-      { code: "183026C", name: "Microeconomía", req: [] },
-      { code: "303001C", name: "Emprendimiento I", req: [] },
-      { code: "83015C", name: "Inglés I", req: [] },
-      { code: "53005C", name: "Metodología para el Manejo de la Información", req: [] },
-      { code: "43016C", name: "Estadística y Probabilidad", req: ["43001C"] }
-    ]
-  },
-  {
-    name: "Semestre 4",
-    courses: [
-      { code: "13040C", name: "Compras y Manejo de Inventarios", req: [] },
-      { code: "283023C", name: "Herramientas de Calidad", req: [] },
-      { code: "183009C", name: "Matemática Financiera", req: [] },
-      { code: "83016C", name: "Inglés II", req: ["83015C"] },
-      { code: "123005", name: "Práctica Técnica", req: ["CREDITOS44"] },
-      { code: "63002C", name: "Aplicaciones Informáticas", req: [] }
-    ]
-  }
+/* ============ Datos: materias por semestre ============ 
+   Edita aquí si quieres cambiar nombres/prerequisitos/créditos.
+   Cada materia: { id, nombre, creditos, prerequisitos: [ids...] }
+*/
+const materiasPorSemestre = [
+  // semestre 1
+  [
+    { id:"13038C", nombre:"Contexto Empresarial", creditos:3, prerequisitos:[] },
+    { id:"23037C", nombre:"Contabilidad General", creditos:3, prerequisitos:[] },
+    { id:"43001C", nombre:"Matemática Fundamental", creditos:3, prerequisitos:[] },
+    { id:"173028C", nombre:"Fundamentos de Mercadeo", creditos:3, prerequisitos:[] },
+    { id:"103009C", nombre:"Cátedra Pensar", creditos:2, prerequisitos:[] },
+    { id:"13002C", nombre:"Documentación y Manejo de la Información", creditos:3, prerequisitos:[] }
+  ],
+  // semestre 2
+  [
+    { id:"13003C", nombre:"Operación de Compensaciones y Salarios", creditos:3, prerequisitos:[] },
+    { id:"13039C", nombre:"Organización, Cultura y Cambio", creditos:3, prerequisitos:["13038C"] },
+    { id:"23025C", nombre:"Costos", creditos:3, prerequisitos:[] },
+    { id:"33016C", nombre:"Aspectos Legales de la Organización", creditos:3, prerequisitos:[] },
+    { id:"43002C", nombre:"Cálculo Diferencial", creditos:3, prerequisitos:["43001C"] },
+    { id:"173015C", nombre:"Técnicas de Ventas y Servicios", creditos:3, prerequisitos:[] }
+  ],
+  // semestre 3
+  [
+    { id:"33017C", nombre:"Aspectos Legales Laborales", creditos:3, prerequisitos:[] },
+    { id:"183026C", nombre:"Microeconomía", creditos:3, prerequisitos:[] },
+    { id:"303001C", nombre:"Emprendimiento I", creditos:3, prerequisitos:[] },
+    { id:"83015C", nombre:"Inglés I", creditos:3, prerequisitos:[] },
+    { id:"53005C", nombre:"Metodología para el Manejo de la Información", creditos:3, prerequisitos:[] },
+    { id:"43016C", nombre:"Estadística y Probabilidad", creditos:3, prerequisitos:["43001C"] }
+  ],
+  // semestre 4
+  [
+    { id:"13040C", nombre:"Compras y Manejo de Inventarios", creditos:3, prerequisitos:[] },
+    { id:"283023C", nombre:"Herramientas de Calidad", creditos:3, prerequisitos:[] },
+    { id:"183009C", nombre:"Matemática Financiera", creditos:3, prerequisitos:[] },
+    { id:"83016C", nombre:"Inglés II", creditos:3, prerequisitos:["83015C"] },
+    // Práctica: special - requires 44 credits
+    { id:"123005", nombre:"Práctica Técnica", creditos:44, prerequisitos:["__CREDITOS_44__"], especial:true },
+    { id:"63002C", nombre:"Aplicaciones Informáticas", creditos:3, prerequisitos:[] }
+  ]
 ];
 
-let completed = new Set();
+/* ============ estado guardado ============ */
+const STORAGE_KEY = "mallaSilvanaAprobadas_v1";
+let aprobadas = new Set(JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"));
 
-function render() {
-  const grid = document.getElementById("grid");
-  grid.innerHTML = "";
+/* helper: get flat list of all materias */
+function allMateriasFlat(){
+  return materiasPorSemestre.flat();
+}
 
-  semesters.forEach(sem => {
+/* calcular créditos aprobados (excepto la práctica especial) */
+function calcularCreditosAprobados(){
+  let total = 0;
+  for(const m of allMateriasFlat()){
+    if(aprobadas.has(m.id) && !m.especial){
+      total += (m.creditos||0);
+    }
+  }
+  return total;
+}
+
+/* decide si una materia está desbloqueada */
+function materiaDesbloqueada(m){
+  // si es práctica y requiere 44 créditos
+  if(m.especial && m.prerequisitos.includes("__CREDITOS_44__")){
+    return calcularCreditosAprobados() >= 44;
+  }
+  // si no tiene prerequisitos -> desbloqueada
+  if(!m.prerequisitos || m.prerequisitos.length === 0) return true;
+  // todos los prerequisitos deben estar aprobados
+  return m.prerequisitos.every(pid => aprobadas.has(pid));
+}
+
+/* render board */
+function render(){
+  const board = document.getElementById("board");
+  board.innerHTML = "";
+
+  const creditos = calcularCreditosAprobados();
+  const creditText = document.getElementById("creditText");
+  const progressBar = document.getElementById("progressBar");
+  creditText.textContent = `${creditos} / 44`;
+  const pct = Math.min(100, Math.round((creditos/44)*100));
+  progressBar.style.width = pct + "%";
+
+  materiasPorSemestre.forEach((sem, sIndex) => {
     const col = document.createElement("div");
     col.className = "semester";
+    const h = document.createElement("h2");
+    h.textContent = `Semestre ${sIndex+1}`;
+    col.appendChild(h);
 
-    const title = document.createElement("h2");
-    title.textContent = sem.name;
-    col.appendChild(title);
+    sem.forEach(m => {
+      const course = document.createElement("div");
+      course.className = "course";
 
-    sem.courses.forEach(course => {
-      const div = document.createElement("div");
-      div.className = "course";
+      // determine state
+      const done = aprobadas.has(m.id);
+      const unlocked = materiaDesbloqueada(m);
+      if(done) course.classList.add("done");
+      else if(!unlocked) course.classList.add("locked");
+      else course.classList.add("available");
 
-      // Verificar requisitos
-      const locked = !course.req.every(r => completed.has(r) || r === "CREDITOS44");
-      if (locked) div.classList.add("locked");
-      if (completed.has(course.code)) div.classList.add("completed");
+      // left: code + title
+      const left = document.createElement("div"); left.className = "left";
+      const code = document.createElement("div"); code.className = "code"; code.textContent = m.id;
+      const title = document.createElement("div"); title.className = "title"; title.textContent = m.nombre;
+      left.appendChild(code); left.appendChild(title);
 
-      div.textContent = `${course.code} – ${course.name}`;
+      // right: checkbox and small info
+      const right = document.createElement("div");
+      right.style.display = "flex"; right.style.flexDirection = "column"; right.style.alignItems = "flex-end"; right.style.gap = "6px";
 
-      div.onclick = () => {
-        if (locked) return;
-        if (completed.has(course.code)) completed.delete(course.code);
-        else completed.add(course.code);
+      const checkboxWrap = document.createElement("label");
+      checkboxWrap.className = "chk";
+      const cb = document.createElement("input"); cb.type = "checkbox"; cb.checked = done;
+      cb.title = done ? "Desmarcar como aprobada" : "Marcar como aprobada";
+
+      // prevent checking locked ones
+      if(!unlocked && !done){
+        cb.disabled = true;
+        cb.style.cursor = "not-allowed";
+        cb.title = "Materia bloqueada";
+      }
+
+      checkboxWrap.appendChild(cb);
+
+      const small = document.createElement("small");
+      small.style.fontSize = "11px"; small.style.color = "var(--muted)";
+      let prereqText = (m.prerequisitos && m.prerequisitos.length)? m.prerequisitos.join(", ") : "Ninguno";
+      if(m.especial && m.prerequisitos.includes("__CREDITOS_44__")) prereqText = "44 créditos aprobados";
+      small.textContent = `Req: ${prereqText} • ${m.creditos} cr.`;
+
+      right.appendChild(checkboxWrap);
+      right.appendChild(small);
+
+      course.appendChild(left);
+      course.appendChild(right);
+
+      // click behaviour: only toggle if unlocked or already done
+      course.addEventListener("click", (e)=>{
+        // avoid double toggle if user clicked the checkbox itself (we let input handle it)
+        if(cb.disabled && !cb.checked) return;
+        // toggle set
+        if(aprobadas.has(m.id)) aprobadas.delete(m.id);
+        else aprobadas.add(m.id);
+        saveState();
         render();
-      };
+      });
 
-      col.appendChild(div);
+      // also handle direct checkbox change (keeps in sync)
+      cb.addEventListener("change", (ev)=>{
+        if(cb.disabled && !cb.checked) return;
+        if(cb.checked) aprobadas.add(m.id); else aprobadas.delete(m.id);
+        saveState();
+        render();
+      });
+
+      col.appendChild(course);
     });
 
-    grid.appendChild(col);
+    board.appendChild(col);
   });
 }
 
+/* save and load */
+function saveState(){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify([...aprobadas]));
+}
+
+/* init */
 render();
+
+/* small helper for debugging in console:
+   window._malla = { materiasPorSemestre, aprobadas, calcularCreditosAprobados };
+*/
 </script>
+
 </body>
 </html>
