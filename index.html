@@ -1,119 +1,152 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-<meta charset="UTF-8">
-<title>Malla Curricular Interactiva</title>
-
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Malla Interactiva</title>
 <style>
-    body {
-        font-family: Arial;
-        background: #f5f5f5;
-        padding: 20px;
-    }
+  body {
+    font-family: Arial, sans-serif;
+    background: #f7f7ff;
+    padding: 20px;
+  }
+  h1 { text-align: center; color: #333; }
 
-    .materia {
-        background: white;
-        padding: 15px;
-        margin-bottom: 10px;
-        border-radius: 10px;
-        border-left: 6px solid #5a5df0;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+  }
 
-    .materia.bloqueada {
-        opacity: 0.4;
-        border-left-color: gray;
-    }
+  .semester {
+    background: #fcfcff;
+    padding: 15px;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  }
 
-    .materia.aprobada {
-        text-decoration: line-through;
-        opacity: 0.6;
-        border-left-color: green;
-    }
+  .semester h2 {
+    text-align: center;
+    margin-bottom: 10px;
+    color: #444;
+  }
 
-    .nombre {
-        font-weight: bold;
-    }
+  .course {
+    background: #dff4ff;
+    padding: 10px;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: 0.2s;
+  }
+
+  .course.completed {
+    background: #b8ffc0;
+    text-decoration: line-through;
+    color: #3a6b3c;
+  }
+
+  .course.locked {
+    background: #f3e8ff;
+    color: #888;
+    cursor: not-allowed;
+  }
 </style>
 </head>
-
 <body>
+<h1>Malla Interactiva – Administración de Empresas</h1>
 
-<h1>Malla Curricular Interactiva - Silvana</h1>
-<p>Marca lo que ya viste. Las materias se activan cuando cumples los prerrequisitos.</p>
-
-<div id="malla"></div>
+<div class="grid" id="grid"></div>
 
 <script>
-
-// ------- CONFIGURACIÓN DE TUS MATERIAS -------- //
-
-// Puedes agregar, borrar o editar aquí sin saber programación.
-// CODE FRIENDLY PARA TI ❤️
-
-const materias = [
-    { id: "ADM101", nombre: "Fundamentos de Administración", prerequisitos: [] },
-    { id: "ECO101", nombre: "Economía I", prerequisitos: [] },
-    { id: "MAT101", nombre: "Matemáticas I", prerequisitos: [] },
-
-    { id: "ADM102", nombre: "Gestión Financiera", prerequisitos: ["ADM101"] },
-    { id: "ECO102", nombre: "Economía II", prerequisitos: ["ECO101"] },
-    { id: "MAT102", nombre: "Matemáticas II", prerequisitos: ["MAT101"] },
-
-    { id: "MER201", nombre: "Fundamentos de Mercadeo", prerequisitos: ["ADM101"] }
+// --- Datos de la malla ---
+const semesters = [
+  {
+    name: "Semestre 1",
+    courses: [
+      { code: "13038C", name: "Contexto Empresarial", req: [] },
+      { code: "23037C", name: "Contabilidad General", req: [] },
+      { code: "43001C", name: "Matemática Fundamental", req: [] },
+      { code: "173028C", name: "Fundamentos de Mercadeo", req: [] },
+      { code: "103009C", name: "Cátedra Pensar", req: [] },
+      { code: "13002C", name: "Documentación y Manejo de Información", req: [] }
+    ]
+  },
+  {
+    name: "Semestre 2",
+    courses: [
+      { code: "13003C", name: "Operación de Compensaciones y Salarios", req: [] },
+      { code: "13039C", name: "Organización, Cultura y Cambio", req: ["13038C"] },
+      { code: "23025C", name: "Costos", req: [] },
+      { code: "33016C", name: "Aspectos Legales de la Organización", req: [] },
+      { code: "43002C", name: "Cálculo Diferencial", req: ["43001C"] },
+      { code: "173015C", name: "Técnicas de Ventas y Servicios", req: [] }
+    ]
+  },
+  {
+    name: "Semestre 3",
+    courses: [
+      { code: "33017C", name: "Aspectos Legales Laborales", req: [] },
+      { code: "183026C", name: "Microeconomía", req: [] },
+      { code: "303001C", name: "Emprendimiento I", req: [] },
+      { code: "83015C", name: "Inglés I", req: [] },
+      { code: "53005C", name: "Metodología para el Manejo de la Información", req: [] },
+      { code: "43016C", name: "Estadística y Probabilidad", req: ["43001C"] }
+    ]
+  },
+  {
+    name: "Semestre 4",
+    courses: [
+      { code: "13040C", name: "Compras y Manejo de Inventarios", req: [] },
+      { code: "283023C", name: "Herramientas de Calidad", req: [] },
+      { code: "183009C", name: "Matemática Financiera", req: [] },
+      { code: "83016C", name: "Inglés II", req: ["83015C"] },
+      { code: "123005", name: "Práctica Técnica", req: ["CREDITOS44"] },
+      { code: "63002C", name: "Aplicaciones Informáticas", req: [] }
+    ]
+  }
 ];
 
-// ---------------------------------------------- //
+let completed = new Set();
 
+function render() {
+  const grid = document.getElementById("grid");
+  grid.innerHTML = "";
 
-function renderMalla() {
-    const malla = document.getElementById("malla");
-    malla.innerHTML = "";
+  semesters.forEach(sem => {
+    const col = document.createElement("div");
+    col.className = "semester";
 
-    materias.forEach(m => {
-        const aprobadas = JSON.parse(localStorage.getItem("materiasAprobadas") || "[]");
-        const isAprobada = aprobadas.includes(m.id);
+    const title = document.createElement("h2");
+    title.textContent = sem.name;
+    col.appendChild(title);
 
-        // Verificar prerequisitos
-        const cumplePrereq = m.prerequisitos.every(p => aprobadas.includes(p));
+    sem.courses.forEach(course => {
+      const div = document.createElement("div");
+      div.className = "course";
 
-        const div = document.createElement("div");
-        div.className = "materia";
+      // Verificar requisitos
+      const locked = !course.req.every(r => completed.has(r) || r === "CREDITOS44");
+      if (locked) div.classList.add("locked");
+      if (completed.has(course.code)) div.classList.add("completed");
 
-        if (!cumplePrereq && !isAprobada) div.classList.add("bloqueada");
-        if (isAprobada) div.classList.add("aprobada");
+      div.textContent = `${course.code} – ${course.name}`;
 
-        div.innerHTML = `
-            <div>
-                <div class="nombre">${m.id} - ${m.nombre}</div>
-                <small>Prerrequisitos: ${m.prerequisitos.length ? m.prerequisitos.join(", ") : "Ninguno"}</small>
-            </div>
+      div.onclick = () => {
+        if (locked) return;
+        if (completed.has(course.code)) completed.delete(course.code);
+        else completed.add(course.code);
+        render();
+      };
 
-            <input type="checkbox" ${isAprobada ? "checked" : ""} />
-        `;
-
-        div.querySelector("input").addEventListener("change", (e) => {
-            let aprobadas = JSON.parse(localStorage.getItem("materiasAprobadas") || "[]");
-
-            if (e.target.checked) {
-                aprobadas.push(m.id);
-            } else {
-                aprobadas = aprobadas.filter(x => x !== m.id);
-            }
-
-            localStorage.setItem("materiasAprobadas", JSON.stringify(aprobadas));
-            renderMalla();
-        });
-
-        malla.appendChild(div);
+      col.appendChild(div);
     });
+
+    grid.appendChild(col);
+  });
 }
 
-renderMalla();
-
+render();
 </script>
-
 </body>
 </html>
